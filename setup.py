@@ -9,6 +9,7 @@ setup(
     "pydub",
     "ffmpeg-python",
     "click",
+    "moviepy",
     ],
     entry_points={
         "console_scripts": [
