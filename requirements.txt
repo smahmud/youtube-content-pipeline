@@ -6,3 +6,4 @@ pydub==0.25.1
 pytubefix==1.0.0
 pytest
 setuptools
+moviepy==2.2.1
