@@ -2,13 +2,6 @@ import time
 import logging
 from functools import wraps
 
-# Config logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    handlers=[logging.StreamHandler()]
-)
-
 def retry(max_attempts=3, delay=2, backoff=2):
     """
     Decorator to retry a function on exception
