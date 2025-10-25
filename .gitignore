@@ -1,4 +1,21 @@
+# Test artifacts
+tests/outputs/
+tests/assets/
+
+# Virtual environments
 .venv/
+env/
+venv/
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Python cache
 __pycache__/
-*.pyc
+*.py[cod]
+
+# Logs
+*.log
+
 output/

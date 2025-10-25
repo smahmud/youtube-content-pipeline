@@ -8,6 +8,14 @@ import click
 from pytubefix import YouTube
 from youtube_audio_extractor import extractor
 import os
+import logging
+
+# Config logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[logging.StreamHandler()]
+)
 
 @click.command()
 @click.argument("source")
@@ -25,11 +33,16 @@ def main(source, output):
     output_path = os.path.join("output", output)
 
     if source.startswith("http"):
-        extractor.download_audio(source, output_path)
+        try:
+            extractor.download_audio(source, output_path)
+            logging.info(f"Audio saved to: {output_path}")
+        except Exception as e:
+            logging.error(f"Failed to extract audio: {e}")
+            print("Something went wrong. Please check the input and try again.")            
     else:
         extractor.extract_audio_from_file(source, output_path)
         
-    print("\n🎯 Done. You may continue using the terminal.")
+    print("\n Done. You may continue using the terminal.")
 
 if __name__ == "__main__":
     main() # pylint: disable=no-value-for-parameter

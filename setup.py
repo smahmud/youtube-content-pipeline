@@ -2,18 +2,17 @@ from setuptools import setup, find_packages
 
 setup(
     name="youtube-content-pipeline",
-    version="0.2.0",
+    version="0.2.1",
     packages=find_packages(),
     install_requires=[
-    "pytubefix",
-    "pydub",
-    "ffmpeg-python",
-    "click",
-    "moviepy",
+        "yt_dlp",
+        "click",
+        "moviepy",
     ],
     entry_points={
         "console_scripts": [
-            "extract-audio=clic:main",
+            "extract-audio=cli:main",
         ],
     },
+    python_requires=">=3.8",
 )
