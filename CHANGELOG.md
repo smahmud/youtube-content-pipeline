@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.1] - 2025-10-25
+### Added
+- Retry logic with exponential backoff for audio downloads
+- Logging for successful and failed operations in CLI and extractor
+
+### Changed
+- Replaced `pytubefix`, `pydub`, and `ffmpeg-python` with `yt-dlp` for more robust YouTube audio extraction
+- Normalized `.mp3` output handling to prevent double extensions
+- Updated `setup.py` to set version to `0.2.1` and include `yt_dlp` in `install_requires`
+
+### Notes
+- `yt-dlp` and `moviepy` require the `ffmpeg` binary to be installed and available in your system PATH
+- You can download `ffmpeg` from https://ffmpeg.org/download.html
+
 ## [0.2.0] - 2025-10-24
 ### Added
 - Support for local MP4 video files in CLI
