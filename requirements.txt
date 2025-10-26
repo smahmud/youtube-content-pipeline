@@ -1,5 +1,4 @@
 click==8.3.0
 colorama==0.4.6
-pytest
 moviepy==2.2.1
 yt_dlp==2025.10.22

@@ -3,30 +3,30 @@ Core audio extraction logic for YouTube videos.
 
 Downloads the audio stream from a given YouTube URL and converts it to MP3 format.
 """
+import logging
 from yt_dlp import YoutubeDL
 from yt_dlp.utils import DownloadError
-from youtube_audio_extractor.retry import retry
 from moviepy import VideoFileClip
-import logging
+from youtube_audio_extractor.retry import retry
 
 @retry(max_attempts=3)
-def download_audio(url, output_file):
+def download_audio(url: str, output_path: str) -> None:
     """
     Downloads audio from a YouTube video and saves it as an MP3 file.
 
-    Parameters:
-        url (str): The YouTube video URL.
-        output_file (str): Path to save the resulting MP3 file.
+    Automatically strips the .mp3 extension from the output path to avoid duplication.
+    The resulting file is saved as <output_path>.mp3.
     """
+
     logging.info(f"Starting download from URL: {url}")
 
     # Strip .mp3 if present
-    if output_file.endswith(".mp3"):
-        output_file = output_file[:-4]
+    if output_path.endswith(".mp3"):
+        output_path = output_path[:-4]
         
     ydl_opts = {
         'format': 'bestaudio/best',
-        'outtmpl': output_file,
+        'outtmpl': output_path,
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'mp3',
@@ -38,7 +38,7 @@ def download_audio(url, output_file):
     try:
         with YoutubeDL(ydl_opts) as ydl:            
             ydl.download([url])
-            logging.info(f"Download complete: {output_file}")
+            logging.info(f"Download complete: {output_path}")
 
     except DownloadError as e:
         logging.error(f"Failed to extract audio: {e}")

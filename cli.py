@@ -3,19 +3,18 @@ Command-line interface for the YouTube audio extractor.
 
 Accepts a YouTube URL and an optional output filename, then triggers audio extraction and MP3 conversion.
 """
-
+import logging
+from youtube_audio_extractor.logging_config import configure_logging
 import click
-from pytubefix import YouTube
 from youtube_audio_extractor import extractor
 import os
-import logging
+
 
 # Config logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    handlers=[logging.StreamHandler()]
-)
+configure_logging()
+
+# Now you can use logging as usual
+logging.info("CLI started")
 
 @click.command()
 @click.argument("source")
