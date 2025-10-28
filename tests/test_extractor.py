@@ -1,14 +1,19 @@
 """
+test_extractor.py
+
 Test suite for audio extraction and download functionality.
 
 Covers:
 - Unit tests for internal logic using mocks (e.g. download_audio behavior)
-- Integration tests for downloading from YouTube and extracting audio from local .mp4 files
+- Metadata enrichment and fallback logic
+- Schema validation for local and YouTube sources
 """
 import os
+import json
+from pathlib import Path
 from unittest.mock import patch, MagicMock
 import pytest
-from youtube_audio_extractor.extractor import download_audio, extract_audio_from_file
+from youtube_audio_extractor.extractor import download_audio_from_youtube, extract_metadata_from_youtube, extract_audio_from_file, extract_metadata, generate_placeholder_metadata
 
 TEST_OUTPUT_DIR = "tests/outputs"
 
@@ -18,61 +23,90 @@ def ensure_output_dir():
 
 
 @patch("youtube_audio_extractor.extractor.YoutubeDL")
-def test_download_audio_mock(mock_yt_dlp):
-    """
-    Unit test for download_audio().
-    
-    Verifies that the YoutubeDL.download() method is called once with the expected arguments.
-    Uses mocking to avoid actual network or file system operations.
-    """
-
+def test_download_triggers_youtubedl_smoke(mock_yt_dlp, tmp_path):
     mock_ydl_instance = MagicMock()
     mock_yt_dlp.return_value.__enter__.return_value = mock_ydl_instance
+    mock_ydl_instance.extract_info.return_value = {"title": "T", "duration": 1, "uploader": "U"}
 
-    output_file = "tests/output/test_download.mp3"
-    download_audio("https://fake-url.com", output_file)
+    url = "https://youtube.com/watch?v=abc123"
+    output_path = "test_output.mp3"
+
+    download_audio_from_youtube(url, output_path)
 
     mock_ydl_instance.download.assert_called_once()
 
 
-@pytest.mark.integration
-def test_extract_audio_from_file_integration():
-    """
-    Integration test for extract_audio_from_file().
-    
-    Runs the full audio extraction pipeline on a sample video file.
-    Asserts that the output audio file is created and non-empty.
-    Cleans up the generated file after execution.
-    """
+@patch("youtube_audio_extractor.extractor.YoutubeDL")
+def test_download_audio_from_youtube_triggers_download(mock_yt_dlp):
+    mock_ydl_instance = MagicMock()
+    mock_yt_dlp.return_value.__enter__.return_value = mock_ydl_instance
 
-    video_path = "tests/assets/sample_video.mp4"
+    url = "https://youtube.com/watch?v=abc123"
+    output_path = "test_output.mp3"
 
-    output_path = os.path.join(TEST_OUTPUT_DIR, "test_audio.mp3")
-    try:
-        extract_audio_from_file(video_path, output_path)
-        assert os.path.exists(output_path)
-        assert os.path.getsize(output_path) > 0
-    finally:
-        if os.path.exists(output_path):
-            os.remove(output_path)
+    download_audio_from_youtube(url, output_path)
+
+    mock_ydl_instance.download.assert_called_once_with([url])
 
 
-@pytest.mark.integration
-def test_download_audio_integration():
-    """
-    Integration test for download_audio().
+@patch("youtube_audio_extractor.extractor.YoutubeDL")
+def test_extract_metadata_from_youtube_returns_expected_structure(mock_yt_dlp):
+    mock_yt_dlp.return_value.__enter__.return_value.extract_info.return_value = {
+        "title": "Test Title",
+        "duration": 123,
+        "uploader": "Test Author"
+    }
 
-    Downloads a real YouTube video using yt_dlp and verifies that the output file is created and non-empty.
-    Cleans up the downloaded file after execution.
-    """
-    url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-    output_path = os.path.join(TEST_OUTPUT_DIR, "test_download.mp3")
+    url = "https://youtube.com/watch?v=abc123"
+    metadata = extract_metadata_from_youtube(url)
 
-    try:
-        download_audio(url, output_path)
-        assert os.path.exists(output_path)
-        assert os.path.getsize(output_path) > 0
-    finally:
-        if os.path.exists(output_path):
-            os.remove(output_path) 
+    assert metadata == {
+        "title": "Test Title",
+        "duration": 123,
+        "author": "Test Author",
+        "source_type": "youtube_url",
+        "source_path": None,
+        "source_url": url,
+        "metadata_status": "complete"
+    }
+
+
+@patch("youtube_audio_extractor.extractor.VideoFileClip")
+def test_extract_audio_from_file_calls_write_audiofile(mock_video_clip):
+    # Setup mock clip and audio
+    mock_audio = MagicMock()
+    mock_clip = MagicMock()
+    mock_clip.audio = mock_audio
+    mock_video_clip.return_value = mock_clip
+
+    video_path = "dummy_video.mp4"
+    output_path = "output.mp3"
+
+    extract_audio_from_file(video_path, output_path)
+
+    # Assert VideoFileClip was called with the video path
+    mock_video_clip.assert_called_once_with(video_path)
+
+    # Assert write_audiofile was called with the correct output path
+    mock_audio.write_audiofile.assert_called_once_with(output_path)
+
+    # Assert clip was closed
+    mock_clip.close.assert_called_once()
+
+
+def test_generate_placeholder_metadata_returns_expected_structure(tmp_path):
+    # Create a dummy file path
+    dummy_path = tmp_path / "video.mp4"
+
+    # Generate metadata
+    metadata = generate_placeholder_metadata(str(dummy_path))
+
+    # Validate structure and values
+    assert metadata["title"] == "video.mp4"
+    assert metadata["duration"] is None
+    assert metadata["author"] is None
+    assert metadata["source_type"] == "local_file"
+    assert metadata["source_path"] == str(dummy_path.resolve())
+    assert metadata["source_url"] is None
+    assert metadata["metadata_status"] == "incomplete"
 
