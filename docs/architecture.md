@@ -9,20 +9,20 @@ This document outlines the high-level architecture of the YouTube Content Pipeli
 ### 1. Extractors
 Platform-specific modules that handle audio and metadata extraction.
 
-pipeline/extractors/
- ├── local/
- │   ├── extractor.py       # Local file-based extraction logic
- │   ├── transcriber.py
- │   └── metadata.py
- ├── youtube/
- │   ├── extractor.py # Unified entry point for YouTube extraction
- ├   ├── transcriber.py # Audio transcription logic 
- │   ├── metadata.py # Metadata parsing and enrichment 
- ├── streamservice/ 
- │   ├── extractor.py 
- │   ├── transcriber.py 
- │   └── metadata.py
+- `pipeline/extractors/local/`
+  - `extractor.py` — Local file-based extraction logic
+  - `transcriber.py`
+  - `metadata.py`
 
+- `pipeline/extractors/youtube/`
+  - `extractor.py` — Unified entry point for YouTube extraction
+  - `transcriber.py` — Audio transcription logic
+  - `metadata.py` — Metadata parsing and enrichment
+
+- `pipeline/extractors/streamservice/`
+  - `extractor.py`
+  - `transcriber.py`
+  - `metadata.py`
 
 Each extractor implements a shared interface (`BaseExtractor`) to ensure compatibility with CLI and agent orchestration.
 
@@ -103,25 +103,27 @@ The pipeline will integrate with an MCP server to support agent-based orchestrat
 ---
 
 ## 📁 Folder Summary
-docs/                         # Architecture, CLI reference, schema, and project structure
 
-pipeline/ 
-├── extractors/ # Platform-specific logic 
-├── schema/ # Shared data contracts 
-├── config/ # Logging and runtime setup 
-├── utils/ # Reusable helpers 
-├── cli.py # CLI entry point
+- `docs/` — Architecture, CLI reference, schema, and project structure
 
-tests/                        # Unit and integration tests
+- `pipeline/`
+  - `extractors/` — Platform-specific logic
+  - `schema/` — Shared data contracts
+  - `config/` — Logging and runtime setup
+  - `utils/` — Reusable helpers
+  - `cli.py` — CLI entry point
 
-changelog.md                 # Version history and release notes
-Makefile                     # Task automation and developer shortcuts
-pytest.ini                   # Pytest configuration
-README.md                    # Executive summary and onboarding
-requirements.txt             # Runtime dependencies
-requirements-dev.txt         # Dev/test dependencies
-requirements.lock.test       # Locked test environment
-setup.py                     # Packaging and distribution metadata
+- `tests/` — Unit and integration tests
+
+- `changelog.md` — Version history and release notes  
+- `Makefile` — Task automation and developer shortcuts  
+- `pytest.ini` — Pytest configuration  
+- `README.md` — Executive summary and onboarding  
+- `requirements.txt` — Runtime dependencies  
+- `requirements-dev.txt` — Dev/test dependencies  
+- `requirements.lock.test` — Locked test environment  
+- `setup.py` — Packaging and distribution metadata
+
 ---
 
 ## 🧭 Future Directions
