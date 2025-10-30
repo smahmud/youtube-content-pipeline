@@ -1,3 +1,10 @@
+"""
+Retry utilities for resilient execution in the content-pipeline project.
+
+Provides decorators and helper functions to automatically retry transient operations
+such as network requests, file I/O, or subprocess calls with exponential backoff.
+Designed for modular use across extractors, transcription, and enrichment stages.
+"""
 import time
 import logging
 from functools import wraps

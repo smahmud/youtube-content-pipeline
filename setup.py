@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="youtube-content-pipeline",
+    name="content-pipeline",
     version="0.2.1",
     packages=find_packages(),
     install_requires=[

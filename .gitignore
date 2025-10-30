@@ -22,3 +22,7 @@ output/
 
 # Build artifact
 *.egg-info/
+
+#VS Code Workspace
+*.code-workspace
+

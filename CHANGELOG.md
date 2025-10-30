@@ -1,6 +1,32 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+## [0.4.0] - 2025-10-30
+
+### Added
+- `extractors/local/` module to isolate local file extraction logic from YouTube workflows
+- `BaseExtractor` abstract class to unify audio and metadata extraction interfaces across platforms
+- `schema/metadata.py` to define and enforce structured metadata output across extractors
+- `config/logging.py` to centralize logging configuration across CLI, extractors, and tests
+- New test suite under `tests/local/` for local audio and metadata utilities
+- Unit tests for extractor interface, CLI dispatch, and metadata schema compliance
+- Module-level and class-level docstrings across pipeline and test files for improved traceability
+
+### Changed
+- Refactored project structure for clarity and modularity:
+  - All streaming platform implementations now reside under `pipeline/extractors/youtube`
+  - Local file handling moved to `pipeline/extractors/local`
+  - Renamed `youtube_audio_extractor` to `pipeline` for semantic alignment
+  - Introduced `pipeline/config`, `pipeline/schema`, and `pipeline/utils` for separation of concerns
+  - Reorganized test suite into `tests/local/` and `tests/youtube/` for platform-specific coverage
+- Migrated `retry.py` to `utils/retry.py` (no functional changes)
+- Refactored from function-based extractors to class-based implementations for clearer contracts and extensibility
+- Centralized logging configuration for consistent formatting across CLI, extractors, and tests
+- Reorganized and expanded test coverage:
+  - Reworked CLI tests to validate argument parsing and dispatch logic
+  - Refactored integration tests to cover full pipeline execution with real inputs
+  - Clarified unit vs integration boundaries and standardized docstring format
+- Consolidated shared logic to reduce duplication and enforce DRY principles across extractors and tests
 
 ## [0.2.1] - 2025-10-25
 ### Added

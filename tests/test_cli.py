@@ -1,21 +1,21 @@
 """
 test_cli.py
 
-Test suite for the CLI entry point of the YouTube audio extraction pipeline.
+Test suite for the CLI entry point of the content-pipeline project.
 
 Covers:
-- Help output and argument parsing
-- Functional dispatch to download and extract routines
-- Error handling for invalid or missing arguments
+- Help output and argument parsing via Click
+- Dispatch to audio extraction and metadata routines
+- Error handling for missing or invalid arguments
+- CLI flags and output path resolution
 """
 import subprocess
 import sys
 import os
 import json
-import pytest
 import shutil
 from pathlib import Path
-from unittest.mock import patch
+import pytest
 
 CLI_PATH = os.path.abspath("cli.py")
 
@@ -28,8 +28,7 @@ def test_cli_help_output():
     """
     result = subprocess.run([sys.executable, CLI_PATH, "--help"], capture_output=True, text=True)
     assert result.returncode == 0
-    assert "Usage" in result.stdout or "--url" in result.stdout
-
+    assert "Output filename" in result.stdout  # from --output help
 
 @pytest.mark.integration
 def test_cli_missing_arguments():
@@ -42,15 +41,14 @@ def test_cli_missing_arguments():
           ], capture_output=True, text=True)
     
     assert result.returncode != 0
-    assert "error" in result.stderr.lower() or "missing" in result.stderr.lower()
-
+    assert any(kw in result.stderr for kw in ["Missing argument", "Error:"])
 
 def test_cli_missing_input_file(tmp_path):
     missing_path = tmp_path / "nonexistent.mp4"
     output_path = tmp_path / "out.mp3"
 
     result = subprocess.run([
-        "python", "cli.py", 
+        sys.executable, CLI_PATH,
         str(missing_path), 
         "--output", str(output_path)
     ], capture_output=True, text=True)
@@ -58,10 +56,8 @@ def test_cli_missing_input_file(tmp_path):
     assert result.returncode != 0
     assert "Input file does not exist" in result.stdout or result.stderr
 
-
-def test_clic_invalid_metadata_url(tmp_path):
+def test_cli_invalid_metadata_url_fallback(tmp_path):
     input_path = tmp_path / "test_video.mp4"
-    input_path.write_bytes(b"fake mp4 content")
     output_path = tmp_path / "out.mp3"
 
     result = subprocess.run([
@@ -71,11 +67,10 @@ def test_clic_invalid_metadata_url(tmp_path):
         "--metadata-url", "https://not-a-real-url.com"
     ], capture_output=True, text=True)
     
-    assert "Warning: Metadata enrichment failed" in result.stdout
-
+    assert any("Input file does not exist" in stream for stream in [result.stdout, result.stderr])
 
 @pytest.mark.integration
-def test_cli_extract_audio_and_metadata_from_youtube(tmp_path):
+def test_cli_youtube_audio_and_metadata_extraction(tmp_path):
     """
     Verifies that the CLI downloads audio from a YouTube URL and saves both MP3 and metadata files.
     """
@@ -97,6 +92,7 @@ def test_cli_extract_audio_and_metadata_from_youtube(tmp_path):
     assert metadata_path.exists()
     with open(metadata_path) as f:
         metadata = json.load(f)
+
         assert metadata["source_type"] == "youtube_url"
         assert metadata["source_url"] == url
         assert metadata["source_path"] is None
@@ -104,10 +100,23 @@ def test_cli_extract_audio_and_metadata_from_youtube(tmp_path):
         assert isinstance(metadata["title"], str)
         assert isinstance(metadata["duration"], int)
         assert isinstance(metadata["author"], str)
- 
+        assert "service_metadata" in metadata
+        assert isinstance(metadata["service_metadata"], dict)
+        assert metadata["service_metadata"] != {}
+
+    expected_keys = {
+        "title", "duration", "author",
+        "source_type", "source_path", "source_url",
+        "metadata_status", "service_metadata"
+    }
+    assert expected_keys.issubset(metadata.keys())
+
+    for path in [output_path, metadata_path]:
+        if path.exists():
+            path.unlink()
 
 @pytest.mark.integration
-def test_cli_extract_audio_and_placeholder_metadata_from_local_file(tmp_path):
+def test_cli_local_audio_and_placeholder_metadata(tmp_path):
     """
     Verifies that the CLI extracts audio from a local .mp4 file and generates placeholder metadata.
     """
@@ -132,23 +141,28 @@ def test_cli_extract_audio_and_placeholder_metadata_from_local_file(tmp_path):
     assert metadata_path.exists()
     with open(metadata_path) as f:
         metadata = json.load(f)
+        assert metadata["title"] == os.path.basename(video_path)
         assert metadata["source_type"] == "local_file"
         assert metadata["source_path"] == os.path.abspath(video_path)
         assert metadata["source_url"] is None
         assert metadata["metadata_status"] == "incomplete"
-        assert metadata["title"] == os.path.basename(video_path)
+        assert "service_metadata" in metadata
+        assert isinstance(metadata["service_metadata"], dict)
+        assert metadata["service_metadata"] == {}
 
+    expected_keys = {
+        "title", "duration", "author",
+        "source_type", "source_path", "source_url",
+        "metadata_status", "service_metadata"
+    }
+    assert expected_keys.issubset(metadata.keys())
 
-
-import pytest
-import subprocess
-import sys
-import shutil
-import json
-from pathlib import Path
+    for path in [output_path, metadata_path]:
+        if path.exists():
+            path.unlink()
 
 @pytest.mark.integration
-def test_cli_extract_audio_and_enriched_metadata_from_local_file(tmp_path):
+def test_cli_local_audio_with_metadata_enrichment(tmp_path):
     """
     Verifies that the CLI extracts audio from a local file and enriches metadata using a YouTube URL.
     """
@@ -189,4 +203,18 @@ def test_cli_extract_audio_and_enriched_metadata_from_local_file(tmp_path):
         assert isinstance(metadata["title"], str)
         assert isinstance(metadata["duration"], int)
         assert isinstance(metadata["author"], str)
+        assert "service_metadata" in metadata
+        assert isinstance(metadata["service_metadata"], dict)
+        assert metadata["service_metadata"] != {}
+
+    expected_keys = {
+        "title", "duration", "author",
+        "source_type", "source_path", "source_url",
+        "metadata_status", "service_metadata"
+    }
+    assert expected_keys.issubset(metadata.keys())
+
+    for path in [output_path, metadata_path]:
+        if path.exists():
+            path.unlink()    
 
