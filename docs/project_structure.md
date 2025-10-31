@@ -68,6 +68,4 @@ This folder contains all architectural, operational, and milestone-related docum
 | `architecture.md`     | High-level system design, agent orchestration, and milestone alignment  |
 | `project_structure.md`| Explains folder layout and rationale (this file)                        |
 | `metadata_schema.md`  | Canonical schema contract and field definitions                         |
-| `cli_reference.md`    | CLI usage, flags, expected inputs/outputs                               |
 | `test_strategy.md`    | How unit and integration tests are structured and validated             |
-| `features.md`         | Milestone-based feature matrix and roadmap (optional but recommended)   |

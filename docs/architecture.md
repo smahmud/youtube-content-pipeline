@@ -1,30 +1,33 @@
-# System Architecture Overview
+## 🧭 System Architecture Overview
 
-This document outlines the high-level architecture of the YouTube Content Pipeline, designed for scalable, multi-agent audio and metadata extraction across platforms like YouTube and TikTok. It supports CLI orchestration, schema enforcement, and modular agent integration.
+This document outlines the high-level architecture of the **Content Pipeline**, designed for scalable, multi-agent audio and metadata extraction. The current implementation supports YouTube, with a modular design that enables future integration of platforms like Vimeo and TikTok. It supports CLI orchestration, schema enforcement, and agent-based modularity.
 
 ---
 
 ## 🧩 Core Components
 
-### 1. Extractors
+### 1. Extractors  
 Platform-specific modules that handle audio and metadata extraction.
 
-- `pipeline/extractors/local/`
-  - `extractor.py` — Local file-based extraction logic
-  - `transcriber.py`
-  - `metadata.py`
+#### `pipeline/extractors/local/`  
+Local file ingestion is architecturally distinct and does **not** follow the same extractor interface as streaming services. It uses specialized modules:
+- `file_audio.py` — Handles local audio file conversion and ingestion  
+- `metadata_utils.py` — Extracts and normalizes metadata from local files using custom logic  
 
-- `pipeline/extractors/youtube/`
-  - `extractor.py` — Unified entry point for YouTube extraction
-  - `transcriber.py` — Audio transcription logic
-  - `metadata.py` — Metadata parsing and enrichment
+> Local extraction does **not** use `pipeline/schema/metadata.py`. Its metadata handling is unique and tailored to file-based workflows.
 
-- `pipeline/extractors/streamservice/`
-  - `extractor.py`
-  - `transcriber.py`
-  - `metadata.py`
+---
 
-Each extractor implements a shared interface (`BaseExtractor`) to ensure compatibility with CLI and agent orchestration.
+#### `pipeline/extractors/youtube/`  
+Streaming service extractors implement a shared interface (`BaseExtractor`) and rely on centralized metadata logic:
+- `extractor.py` — Unified entry point for YouTube audio and metadata extraction  
+- Uses `pipeline/schema/metadata.py` for schema enforcement and normalization  
+
+---
+
+#### `pipeline/extractors/streamservice/` *(future targets: Vimeo, TikTok, etc.)*  
+- `extractor.py` — Shared interface for streaming platform extraction logic  
+- Will also use `pipeline/schema/metadata.py` for consistent metadata handling across services  
 
 ---
 
@@ -84,7 +87,7 @@ The pipeline will integrate with an MCP server to support agent-based orchestrat
 
 ---
 
-## 8 Test Coverage
+## 8. Test Coverage
 
 - Unit tests validate extractor logic, schema compliance, and CLI flag behavior
 - Integration tests simulate real input scenarios across platforms and verify output normalization
