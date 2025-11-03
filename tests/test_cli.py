@@ -138,15 +138,6 @@ def test_cli_extract_audio_and_placeholder_metadata_from_local_file(tmp_path):
         assert metadata["metadata_status"] == "incomplete"
         assert metadata["title"] == os.path.basename(video_path)
 
-
-
-import pytest
-import subprocess
-import sys
-import shutil
-import json
-from pathlib import Path
-
 @pytest.mark.integration
 def test_cli_extract_audio_and_enriched_metadata_from_local_file(tmp_path):
     """

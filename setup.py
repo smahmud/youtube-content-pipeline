@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="youtube-content-pipeline",
-    version="0.2.1",
+    version="0.3.0",
     packages=find_packages(),
     install_requires=[
         "yt_dlp",

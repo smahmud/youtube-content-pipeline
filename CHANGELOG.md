@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0] - 2025-10-28
+
+### Added
+- `extract_metadata()` implementation for YouTube extractor to return structured metadata from video source
+- Metadata schema definition in `pipeline/schema/metadata.py` to enforce consistent output structure
+- Unit tests for metadata extraction and schema compliance
+
+### Changed
+- Refactored YouTube extractor to support both audio and metadata extraction via unified interface
+- Updated CLI to support `--metadata-url` flag and dispatch accordingly
+- Expanded test coverage to validate metadata output and CLI integration
+
+## [0.2.2] - 2025-10-27
+
+### Added
+- Integration tests to validate CLI behavior and extractor output across real input scenarios
+- Logging configuration scaffold to unify log formatting and control across pipeline components
+
+### Changed
+- Hardened post-merge pipeline by centralizing logging setup in `pipeline/config/logging.py`
+- Enforced consistent logging usage across CLI, extractors, and tests
+- Improved error handling and retry logic in CLI and extractor modules
+- Refactored test scaffolds to match actual CLI invocation and project structure
+
 ## [0.2.1] - 2025-10-25
 ### Added
 - Retry logic with exponential backoff for audio downloads
