@@ -1,6 +1,7 @@
-# 🎬 Multi-Agent Content Pipeline  
+# 🧠 Content Pipeline
 
-A modular, multi-agent pipeline for extracting, enriching, and publishing audio-based content from platforms like YouTube. Designed for transparency, auditability, and enterprise-grade scalability.
+A modular, multi-agent pipeline for extracting, enriching, and publishing audio-based content from platforms like YouTube.  
+Designed for transparency, auditability, and enterprise-grade scalability.
 
 ---
 
