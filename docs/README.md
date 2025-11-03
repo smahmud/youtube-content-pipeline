@@ -9,7 +9,8 @@ A modular, multi-agent pipeline for extracting, enriching, and publishing audio-
 This project orchestrates audio extraction, transcription, metadata enrichment, and publishing workflows across multiple platforms. It supports CLI invocation, schema enforcement, and future agent-based routing via an MCP server.
 
 For system internals, see [docs/architecture.md](docs/architecture.md).  
-For folder layout, see [docs/project_structure.md](docs/project_structure.md).
+For folder layout, see [docs/project_structure.md](docs/project_structure.md).  
+For testing strategy and coverage, see [docs/test_strategy.md](docs/test_strategy.md).
 
 ---
 
@@ -38,18 +39,28 @@ Architecture overhaul and multi-agent readiness
 - Preparing release `v0.4.0`
 
 ### 🧭 Upcoming
-- 🎙️ Transcribe audio to text  
-- 🤖 Summarize transcripts with LLMs  
-- 📝 Format outputs for publishing (blogs, tweets, chapters, SEO)  
-- 📦 Archive and index enriched content  
-- 🧠 Integrate MCP server for agent orchestration  
-- 🖥️ Build GUI for metadata enrichment  
-- 📊 Add real-time observability and tracing  
+
+- 🎙️ Transcribe audio to text using platform-agnostic modules  
+- 🤖 Summarize transcripts with LLMs to generate highlights, tags, and metadata  
+- 📝 Format outputs for publishing (blogs, threads, chapters, SEO)  
+- 📦 Archive and index enriched content in a searchable store  
+- 🧠 Integrate MCP server for agent routing, retries, and tagging  
+- 🖥️ Build a GUI for reviewing and editing metadata  
+- 📊 Add real-time observability: logging, tracing, and metrics
 
 ---
 
 ## 📄 License
 
-MIT — see `LICENSE` file for details.
+This project is licensed under  
+**Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)**
+
+You may:
+- Share and adapt the material with attribution  
+- Not use it for commercial purposes  
+- Not use it for training machine learning models (including LLMs) without explicit permission  
+
+See [LICENSE.md](../LICENSE.md) for full legal terms.  
+Full license text: [https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode](https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode)
 
 
