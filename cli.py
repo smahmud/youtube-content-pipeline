@@ -1,7 +1,8 @@
 """
-Command-line interface for the YouTube audio extractor.
+File: cli.py
 
-Accepts a YouTube URL and an optional output filename, then triggers audio extraction and MP3 conversion.
+Command-line interface for running the transcription pipeline.
+Handles audio extraction, adapter selection, transcription, and output persistence.
 """
 import os
 import json
@@ -9,9 +10,21 @@ import sys
 import logging
 import click
 from pipeline.extractors.youtube.extractor import YouTubeExtractor
-from pipeline.extractors.local.metadata_utils import generate_local_placeholder_metadata
+from pipeline.extractors.dispatch import classify_source
+from pipeline.extractors.schema.metadata import build_local_placeholder_metadata
 from pipeline.extractors.local.file_audio import extract_audio_from_file
 from pipeline.config.logging_config import configure_logging
+from pipeline.transcribers.adapters.whisper import WhisperAdapter
+from pipeline.transcribers.normalize import normalize_transcript_v1
+from pipeline.transcribers.persistence import LocalFilePersistence
+
+from cli.help_texts import (
+    EXTRACT_SOURCE_HELP,
+    EXTRACT_OUTPUT_HELP,
+    TRANSCRIBE_SOURCE_HELP,
+    TRANSCRIBE_OUTPUT_HELP,
+    TRANSCRIBE_LANGUAGE_HELP
+)
 
 # Config logging
 configure_logging()
@@ -19,65 +32,62 @@ configure_logging()
 # Now you can use logging as usual
 logging.info("CLI started")
 
-@click.command()
-@click.argument("source")
-@click.option("--output", default="output.mp3", help="Output filename")
-@click.option("--metadata-url", type=str, help="YouTube URL to enrich metadata for a local video file")
-def main(source, output, metadata_url):
+@click.group()
+def cli():
+    """Content Pipeline CLI"""
+    pass
+
+@cli.command()
+@click.option("--source", required=True, help=EXTRACT_SOURCE_HELP)
+@click.option("--output", default="output.mp3", help=EXTRACT_OUTPUT_HELP)
+def extract(source, output):
     """
-    CLI entry point for extracting audio from a YouTube video.
-
-    Parameters:
-        source (str): YouTube URL or path to local video file.
-        output (str): Filename for the resulting MP3 file (default: output.mp3).
+    Extract audio from the source file and save it to the specified output path.    
     """
-
-    if not source.startswith("http") and not os.path.exists(source):
-        logging.error(f"Input file not found: {source}")
-        print("Error: Input file does not exist.")
-        sys.exit(1)
-
+    source_type = classify_source(source)
+    
     os.makedirs("output", exist_ok=True)
     output_path = os.path.join("output", output)
     metadata_path = output_path.replace(".mp3", ".json")
 
-    extractor = YouTubeExtractor()
-
-    if source.startswith("http"):
-        # Youtube flow
-        try:            
+    if source_type =="streaming":        
+        extractor = YouTubeExtractor()
+        try:
             metadata = extractor.extract_metadata(source)            
             with open(metadata_path, "w") as f:
                 json.dump(metadata, f, indent=2)
             logging.info(f"Metadata saved to: {metadata_path}")
         except Exception as e:
                 logging.error(f"Failed to extract or save metadata: {e}")
-                logging.warning("Metadata extraction failed.")
+                print("Warning: Metadata extraction failed.")
 
         try:
             extractor.extract_audio(source, output_path)
             logging.info(f"Audio saved to: {output_path}")
         except Exception as e:
             logging.error(f"Failed to extract audio: {e}")
-            logging.warning("Something went wrong. Please check the input and try again.")            
-    else:
-        # Local file flow
-        if metadata_url:
-            #metadata_path = output_path.replace(".mp3", ".json")
-            try:
-                metadata = extractor.extract_metadata(metadata_url)
-                metadata["source_type"] = "local_file"
-                metadata["source_path"] = os.path.abspath(source)
-                metadata["source_url"] = metadata_url
-                metadata["metadata_status"] = "complete"
-                logging.info(f"Metadata enriched from URL: {metadata_url}")
-            except Exception as e:
-                logging.info(f"Metadata enrichment failed: {e}")
-                print("Warning: Metadata enrichment failed. Falling back to placeholder.")
-                metadata = generate_local_placeholder_metadata(source)
-        else:
-            metadata = generate_local_placeholder_metadata(source)
+            print("Warning: Audio extraction failed.")
+    
+    elif source_type == "storage":
+        metadata = build_local_placeholder_metadata(source)
+        try:
+            with open(metadata_path, "w") as f:
+                json.dump(metadata, f, indent=2)
+            logging.info(f"Metadata saved to: {metadata_path}")
+        except Exception as e:
+            logging.error(f"Failed to save metadata: {e}")
+            print("Warning: Could not save metadata.")
 
+        # Placeholder for future extractor logic
+        logging.warning("Cloud storage extraction not yet implemented.")
+
+    else: # file_system
+        if not os.path.exists(source):
+            logging.error(f"Input file not found: {source}")
+            print("Error: Input file does not exist.")
+            sys.exit(1)
+
+        metadata = build_local_placeholder_metadata(source)
         try:
             with open(metadata_path, "w") as f:
                 json.dump(metadata, f, indent=2)
@@ -91,10 +101,46 @@ def main(source, output, metadata_url):
             logging.info(f"Audio extracted from local file: {output_path}")
         except Exception as e:
             logging.error(f"Failed to extract audio from local file: {e}")            
-            print("Audio extraction failed.")
+            print("Warning: Audio extraction failed.")
         
     print("\n Done. You may continue using the terminal.")
 
+
+@cli.command()
+@click.option("--source", required=True, help=TRANSCRIBE_SOURCE_HELP)
+@click.option("--output", default="transcript.json", help=TRANSCRIBE_OUTPUT_HELP)
+@click.option("--language", default=None, help=TRANSCRIBE_LANGUAGE_HELP)
+def transcribe(source, output, language):
+    """
+    Extract audio from the source, run transcription, and save the normalized transcript.
+    """
+    # Validate source file
+    if not os.path.exists(source):
+        logging.error(f"Audio file not found: {source}")
+        print("Error: Audio file does not exist.")
+        sys.exit(1)
+
+    # Prepare output paths
+    os.makedirs("output", exist_ok=True)
+    output_path = os.path.join("output", output)
+
+    # Run transcription
+    adapter = WhisperAdapter(model_name="base")  # You can make model configurable later
+    raw_transcript = adapter.transcribe(source, language=language)
+    transcript = normalize_transcript_v1(raw_transcript, adapter)
+
+    # Save transcript
+    try:
+        strategy = LocalFilePersistence()
+        strategy.persist(transcript, output_path)
+        logging.info(f"Transcript saved to: {output_path}")
+    except Exception as e:
+        logging.error(f"Failed to save transcript: {e}")
+        print("Warning: Could not save transcript.")
+
+    print("\n Done. Transcript generated.")
+
 if __name__ == "__main__":
-    main() # pylint: disable=no-value-for-parameter
-    
+    cli()
+
+
