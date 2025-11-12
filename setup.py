@@ -12,6 +12,7 @@ from setuptools import setup, find_packages
 setup(
     name="content-pipeline",
     version="0.5.0",
+    py_modules=["cli"],
     packages=find_packages(),
     install_requires=[
         "yt_dlp",
@@ -23,7 +24,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "content-pipeline=content_pipeline.cli:cli",
+            "content-pipeline=cli:cli",
         ],
     },
     python_requires=">=3.8",
