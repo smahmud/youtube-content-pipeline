@@ -1,5 +1,5 @@
 """
-test_extractor.py
+File: test_extractor.py
 
 Test suite for audio extraction and download functionality.
 
@@ -13,7 +13,7 @@ from unittest.mock import patch, MagicMock
 import pytest
 from pipeline.extractors.youtube.extractor import YouTubeExtractor
 
-TEST_OUTPUT_DIR = "tests/outputs"
+TEST_OUTPUT_DIR = "tests/output"
 
 @pytest.fixture(scope="module", autouse=True)
 def ensure_output_dir():
@@ -51,7 +51,7 @@ def test_extract_metadata_from_youtube_returns_expected_structure(mock_yt_dlp):
     assert metadata["title"] == "Test Title"
     assert metadata["duration"] == 123
     assert metadata["author"] == "Test Author"
-    assert metadata["source_type"] == "youtube_url"
+    assert metadata["source_type"] == "streaming"
     assert metadata["source_path"] is None
     assert metadata["source_url"] == source
     assert metadata["metadata_status"] == "complete"

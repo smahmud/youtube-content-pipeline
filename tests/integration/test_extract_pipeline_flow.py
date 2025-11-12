@@ -1,32 +1,26 @@
 """
-test_integration.py
+File: test_extract_pipeline_flow.py
 
-End-to-end integration tests for the content-pipeline project.
+Integration tests for the audio and metadata extraction stages of the content pipeline.
 
 Covers:
-- Real `.mp4` input and `.mp3` output generation
-- Metadata extraction and persistence as `.json`
-- CLI-driven execution across audio and metadata stages
-- Schema validation and file existence checks
+- YouTube extraction: downloads `.mp3` audio and generates metadata from a public video URL
+- Local file extraction: converts `.mp4` to `.mp3` and generates placeholder metadata
+- Schema validation: ensures metadata conforms to expected structure and completeness
+- File persistence: verifies that audio and metadata files are created and contain valid content
 """
 import os
 import json
 import pytest
 from pipeline.extractors.youtube.extractor import YouTubeExtractor
 from pipeline.extractors.local.file_audio import extract_audio_from_file
-from pipeline.extractors.local.metadata_utils import generate_local_placeholder_metadata
+from pipeline.extractors.schema.metadata import build_local_placeholder_metadata
 
-TEST_OUTPUT_DIR = "tests/outputs"
+TEST_OUTPUT_DIR = "tests/output"
 
 @pytest.mark.integration
 def test_extract_audio_from_youtube_integration():
-    """
-    Integration test for download_audio_from_youtube() and extract_metadata_from_youtube().
-
-    Downloads a real YouTube video and verifies that the audio and metadata files are created and valid.
-    """
-    
-    source = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+    source = "https://www.youtube.com/watch?v=p4SoSxyJ7Nc"
     output_path = os.path.join(TEST_OUTPUT_DIR, "test_download.mp3")
     metadata_path = output_path.replace(".mp3", ".json")
 
@@ -48,7 +42,7 @@ def test_extract_audio_from_youtube_integration():
         assert os.path.exists(metadata_path)
 
         # Validate core schema
-        assert metadata["source_type"] == "youtube_url"
+        assert metadata["source_type"] == "streaming"
         assert metadata["source_url"] == source
         assert metadata["source_path"] is None
         assert metadata["metadata_status"] == "complete"
@@ -70,6 +64,7 @@ def test_extract_audio_from_youtube_integration():
         assert expected_keys.issubset(metadata.keys())
 
     finally:
+        pass
         for path in [output_path, metadata_path]:
             if os.path.exists(path):
                 os.remove(path)
@@ -77,11 +72,6 @@ def test_extract_audio_from_youtube_integration():
 
 @pytest.mark.integration
 def test_extract_audio_from_file_integration():
-    """
-    Integration test for extract_audio_from_file().
-
-    Verifies that audio is extracted from a local video file and saved as an MP3.
-    """
     video_path = "tests/assets/sample_video.mp4"
     output_path = os.path.join(TEST_OUTPUT_DIR, "test_audio.mp3")
 
@@ -93,7 +83,7 @@ def test_extract_audio_from_file_integration():
         assert os.path.getsize(output_path) > 0
 
         metadata_path = output_path.replace(".mp3", ".json")
-        metadata = generate_local_placeholder_metadata(video_path)
+        metadata = build_local_placeholder_metadata(video_path)
 
         with open(metadata_path, "w") as f:
             json.dump(metadata, f, indent=2)
@@ -103,7 +93,7 @@ def test_extract_audio_from_file_integration():
 
         # Validate core schema
         assert metadata["title"] == "sample_video.mp4"
-        assert metadata["source_type"] == "local_file"
+        assert metadata["source_type"] == "file_system"
         assert metadata["source_path"] == os.path.abspath(video_path)
         assert metadata["source_url"] is None
         assert metadata["metadata_status"] == "incomplete"
