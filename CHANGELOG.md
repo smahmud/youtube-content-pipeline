@@ -1,6 +1,48 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+## [0.5.0] - 2025-11-11
+
+### Added
+- Modular CLI with `click` group and subcommands for extensible audio and transcription workflows
+- `transcribe` CLI command:
+  - Converts audio to text using Whisper as the transcription engine
+  - Normalizes raw transcripts using the `transcript_v1` model
+  - Supports `.mp3` inputs from local, cloud, or streaming sources
+- Transcription powered by OpenAI Whisper in the `transcribe` command:
+  - Converts `.mp3` audio to raw text using Whisper's multilingual speech recognition
+  - Supports robust transcription across accents, languages, and noisy environments
+  - Output is normalized using the `transcript_v1` model for punctuation, casing, and formatting consistency
+- `dispatch.py` with `classify_source()` to route sources as `streaming`, `storage`, or `file_system`
+- Generalized metadata schema using structural source types (`streaming`, `storage`, `file_system`)
+- File-system persistence for metadata and transcript artifacts:
+  - Metadata saved as `.json` alongside extracted audio
+  - Transcripts saved as `.txt` after normalization
+- `TranscriberAdapter` interface using `Protocol` instead of `ABC` for cleaner contracts and static validation
+- Standardized file-level and function/class-level docstrings across CLI, extractors, and schema modules
+- New test coverage for transcriber functionality, including Whisper transcription, normalization, and file persistence
+- New test cases for:
+  - CLI routing and source classification
+  - Metadata generation and schema compliance
+  - Transcriber adapter behavior and transcript normalization
+- `help_texts.py` module to centralize CLI help text for subcommands and options
+
+### Changed
+- Refactored `generate_local_placeholder_metadata()`:
+  - Renamed to `build_local_placeholder_metadata()`
+  - Moved to `metadata.py` and removed `metadata_utils.py`
+  - Updated to use `classify_source()` output directly for `source_type` to eliminate duplication
+- Updated CLI `extract()` logic to route based on `classify_source()` and generate metadata accordingly
+- Normalized docstring structure across implementation and test files:
+  - Implementation modules now include filename-prefixed docstrings and scoped documentation for classes, methods, and functions
+  - Test modules include file-level docstrings only, describing coverage and integration scope (e.g. `test_extract_pipeline_flow.py`)
+
+### Removed
+- `SourceType` alias from `metadata.py` (`Literal["youtube_url", "local_file"]`) in favor of centralized classification via `dispatch.classify_source()`
+- First positional argument from CLI entry point, replaced by grouped subcommands (`extract`, `transcribe`, etc.)
+- `--metadata-url` flag from `extract` CLI command, now handled internally via source classification and metadata builders
+- `metadata_utils.py` module (functionality merged into `metadata.py`)
+- Redundant type annotations and hardcoded metadata fields in placeholder builders
+
 ## [0.4.0] - 2025-10-30
 
 ### Added
