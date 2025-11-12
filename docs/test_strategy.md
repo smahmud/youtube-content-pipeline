@@ -24,6 +24,9 @@ The testing strategy ensures that all core components — extractors, CLI orches
 - **CLI Invocation Tests**  
   Ensure CLI commands execute correctly with expected flags and outputs.
 
+- **Transcript Normalization Tests**  
+  Validate `TranscriptV1` schema compliance and adapter behavior across transcriber outputs.
+
 ---
 
 ## 3. Folder Layout
@@ -38,19 +41,40 @@ This folder contains unit and integration tests for core pipeline components, or
 
 ```text
 tests/
-├── __init__.py
-├── test_cli.py               # Validates CLI entry point and orchestration logic
-├── test_integration.py       # Full pipeline integration test
 ├── assets/
-│   └── local/
-│       ├── __init__.py
-│       ├── test_file_audio.py       # Tests local audio ingestion and conversion
-│       └── test_metadata_utils.py   # Tests metadata extraction from local files
-├── outputs/
-│   └── youtube/
-│       ├── __init__.py
-│       └── test_extractor.py        # Tests YouTube extractor logic and metadata normalization
+│   ├── sample_audio.mp3
+│   ├── sample_transcript_v1.json
+│   ├── sample_transcript.txt
+│   ├── sample_video_metadata.json
+│   ├── sample_video.mp4
+│   └── sample_whisper_raw_output.json
+├── output/
+├── cli/
+│   ├── test_extract_cli.py
+│   └── test_transcribe_cli.py
+├── integration/
+│   ├── test_extract_pipeline_flow.py
+│   └── test_transcribe_pipeline_flow.py
+├── pipeline/
+│   ├── extractors/
+│   │   ├── local/
+│   │   │   └── test_file_audio.py
+│   │   ├── youtube/
+│   │   │   └── test_extractor.py
+│   │   └── schema/
+│   │       └── test_metadata.py
+│   └── transcribers/
+│       ├── adapters/
+│       │   └── test_whisper_adapter.py
+│       ├── schemas/
+│       │   └── test_transcript_v1.py
+│       ├── test_normalize.py
+│       ├── test_persistence.py
+│       ├── test_transcriber.py
+│       └── test_validate.py
+
 ```
+
 ---
 
 ### 4. Execution
@@ -70,6 +94,18 @@ To exclude integration tests and run only unit tests:
 pytest -m "not integration"
 ```
 
+To run only slow tests:
+
+```bash
+pytest -m "slow"
+```
+
+To exclude slow tests:
+
+```bash
+pytest -m "not slow"
+```
+
 Execution Examples
 Run the full test suite:
 ```bash
@@ -77,36 +113,45 @@ pytest tests/
 ```
 Run all tests in a specific file:
 ```bash
-pytest tests/test_cli.py
+pytest tests/cli/test_extract_cli.py
 ```
 Run a specific test function by name:
 ```bash
-pytest tests/test_cli.py::test_flag_parsing
+pytest tests/integration/test_extract_pipeline_flow.py::test_extract_audio_from_youtube_integration
 ```
 
 >**Note:**
 >All tests use pytest with unittest.mock for isolation
 >Integration tests reflect real CLI usage and agent orchestration
->Coverage for streamservice extractors (e.g. Vimeo, TikTok) will be added after v1.0.0
-
-Code
-
-### 5. Mocking and Isolation
-
-External dependencies (e.g. YouTube downloads, file I/O) are mocked using `unittest.mock` to ensure deterministic behavior and fast execution.
 
 ---
 
-### 6. Milestone Coverage — v0.4.0
+### 5. Mocking and Isolation
 
-- YouTube extractor logic  
-- Local file ingestion  
-- Metadata schema enforcement  
-- CLI orchestration and flag parsing
+External dependencies are mocked using `unittest.mock` to ensure deterministic behavior and fast execution.
+
+- **YouTube downloads** and file I/O are mocked to avoid network and disk dependencies  
+- **Whisper transcription** is mocked in transcriber adapter tests to isolate normalization and persistence logic  
+- **Metadata builders** are tested with placeholder inputs to avoid real source classification
+
+---
+
+### 6. Milestone Coverage — v0.5.0
+
+- Transcriber adapter behavior using OpenAI Whisper  
+- Transcript normalization with `TranscriptV1` schema  
+- File-system persistence for transcript and metadata artifacts  
+- CLI subcommand routing via `click` group (`extract`, `transcribe`)  
+- Source classification via `dispatch.classify_source()`  
+- Metadata schema validation for structural source types (`streaming`, `storage`, `file_system`)
 
 ---
 
 ### 7. Future Plans
 
-- Add transcription module tests in `v0.5.0`  
-- Integrate coverage reporting and CI hooks
+- Add test coverage for streaming transcription and confidence scoring  
+- Validate transcript enrichment and segment filtering logic  
+- Scaffold CLI test coverage for modular subcommands (`extract`, `transcribe`, etc.)  
+- Introduce extractor interface compliance tests for future platforms (TikTok, Vimeo)  
+- Integrate coverage reporting and CI hooks for milestone tracking
+

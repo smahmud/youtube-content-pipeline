@@ -10,11 +10,21 @@ This document outlines the high-level architecture of the **Content Pipeline**, 
 Platform-specific modules that handle audio and metadata extraction.
 
 #### `pipeline/extractors/local/`  
-Local file ingestion is architecturally distinct and does **not** follow the same extractor interface as streaming services. It uses specialized modules:
-- `file_audio.py` — Handles local audio file conversion and ingestion  
-- `metadata_utils.py` — Extracts and normalizes metadata from local files using custom logic  
+Local file ingestion now uses the unified metadata schema and classification logic:
 
-> Local extraction does **not** use `pipeline/schema/metadata.py`. Its metadata handling is unique and tailored to file-based workflows.
+- `file_audio.py` — Handles local audio file conversion and ingestion  
+- `metadata.py` — Builds placeholder metadata using `build_local_placeholder_metadata()`  
+- `classify_source()` — Determines `source_type` for routing and metadata construction
+
+> Local extraction now conforms to the shared schema in `pipeline/schema/metadata.py`.
+
+---
+
+#### `pipeline/extractors/base.py`  
+Defines the `BaseExtractor` interface for platform-specific audio and metadata extraction:
+- `extract_audio(source, output_path)` — Extracts audio from a media source into a local file  
+- `extract_metadata(source)` — Returns structured metadata for downstream enrichment  
+- Subclasses implement platform-specific logic (e.g., YouTube, TikTok, Vimeo)
 
 ---
 
@@ -25,44 +35,127 @@ Streaming service extractors implement a shared interface (`BaseExtractor`) and 
 
 ---
 
-#### `pipeline/extractors/streamservice/` *(future targets: Vimeo, TikTok, etc.)*  
-- `extractor.py` — Shared interface for streaming platform extraction logic  
-- Will also use `pipeline/schema/metadata.py` for consistent metadata handling across services  
+### 2. Transcribers  
+Modular adapters that convert extracted audio into structured transcript data.
+
+#### `pipeline/transcribers/adapters/`  
+Adapter implementations for different transcription engines. Each adapter conforms to a shared interface (`TranscriberAdapter`) and exposes:
+- `transcribe()` — Converts audio file to raw transcript dictionary  
+- `get_engine_info()` — Returns engine name and version for metadata construction  
+
+Current implementation:
+- `whisper.py` — Uses OpenAI Whisper for transcription; supports multiple model variants
+
+---
+
+#### `pipeline/transcribers/normalize.py`  
+Normalizes raw transcript output into a structured `TranscriptV1` object:
+- Applies punctuation, casing, and whitespace normalization
+- Optionally preserves timestamped segments
+- Constructs `TranscriptV1` via `normalize_transcript()` and `build_transcript_metadata()`
+
+---
+
+#### `pipeline/transcribers/schemas/transcript_v1.py`
+Defines the `TranscriptV1` schema used across the pipeline:
+- `TranscriptSegment` — Individual text segment with timestamp, speaker, and confidence  
+- `TranscriptMetadata` — Engine, version, language, and creation timestamp  
+- `TranscriptV1` — Full transcript object with metadata and segments
+
+---
+
+#### `pipeline/transcribers/validate.py`  
+Validates raw transcript dictionaries against the `TranscriptV1` schema:
+- Raises `TranscriptValidationError` on malformed input  
+- Enforces timestamp format and confidence bounds  
+- Rejects extra fields via `extra="forbid"` model config
+
+---
+
+#### `pipeline/transcribers/persistence.py`  
+Handles transcript serialization and file output:
+- Persists any `TranscriptV1` or compatible object to disk  
+- Returns absolute path to saved file
 
 ---
 
 ### 2. CLI Orchestration
 
-pipeline/cli.py
+`cli.py` — CLI entry point located at the project root
 
-- Entry point for invoking extractors via command-line
-- Supports flags like `--extract-audio`, `--extract-metadata`, `--platform youtube`
-- Handles logging, error propagation, and output normalization
+Invokes pipeline stages via command-line. Uses Click-based named options with contributor-friendly help text and schema-enforced output.
+
+---
+
+#### 🧩 Pipeline Entry
+
+The CLI is organized into subcommands using Click groups:
+
+- `extract` — triggers the extraction pipeline
+- `transcribe` — triggers the transcription pipeline
+
+Each subcommand accepts named options for clarity and contributor ergonomics.
+
+---
+
+#### 🎧 Extract Flags
+
+Used with the `extract` subcommand:
+
+- `--source` — input media path (YouTube URL or local `.mp4`)
+- `--output` — directory for saving extracted `.mp3` and metadata `.json`
+
+Output includes:
+- `.mp3` audio file
+- Metadata `.json` conforming to the unified schema
+
+---
+
+#### 📝 Transcribe Flags
+
+Used when `--transcribe` is active:
+
+- `--source` — path to the input audio file (`.mp3`)
+- `--output` — path for saving transcript output (`.json`)
+- `--language` — specifies spoken language in the audio (e.g., `en`, `fr`, `de`)
+
+Output includes:
+- Transcript `.json` conforming to `TranscriptV1` schema
+
+---
+
+Handles logging, error propagation, and output normalization across all flows.
 
 ---
 
 ### 3. Schema Enforcement
 
-pipeline/schema/metadata.py
+#### `pipeline/extractors/schema/metadata.py`
 
-- Defines the canonical metadata schema used across extractors
+- Defines the metadata schema used by extractors (YouTube, local)
 - Enforced via unit tests and integration validation
 - Ensures consistent downstream consumption by agents or GUI
+
+#### `pipeline/transcribers/schemas/transcript_v1.py`
+
+- Defines the transcript schema used by transcriber adapters
+- Enforced via integration tests and schema validation
+- Enables structured enrichment, publishing, and archival
 
 ---
 
 ### 4. Configuration & Logging
 
-pipeline/config/logging.py
+#### `pipeline/config/logging_config.py`
 
-- Centralized logging setup for CLI, extractors, and tests
-- Supports structured logs and configurable verbosity
+- Centralized logging configuration for CLI and pipeline modules  
+- Supports structured logs, verbosity control, and test isolation
 
 ---
 
 ### 5. Utilities
 
-pipeline/utils/retry.py
+#### `pipeline/utils/retry.py`
 
 - Generic retry logic for transient failures (e.g., network, API)
 - Used across extractors and CLI
@@ -107,33 +200,14 @@ The pipeline will integrate with an MCP server to support agent-based orchestrat
 
 ## 📁 Folder Summary
 
-- `docs/` — Architecture, CLI reference, schema, and project structure
-
-- `pipeline/`
-  - `extractors/` — Platform-specific logic
-  - `schema/` — Shared data contracts
-  - `config/` — Logging and runtime setup
-  - `utils/` — Reusable helpers
-  - `cli.py` — CLI entry point
-
-- `tests/` — Unit and integration tests
-
-- `changelog.md` — Version history and release notes  
-- `Makefile` — Task automation and developer shortcuts  
-- `pytest.ini` — Pytest configuration  
-- `README.md` — Executive summary and onboarding  
-- `requirements.txt` — Runtime dependencies  
-- `requirements-dev.txt` — Dev/test dependencies  
-- `requirements.lock.test` — Locked test environment  
-- `setup.py` — Packaging and distribution metadata
+For full folder and file layout, see [project_structure.md](project_structure.md)
 
 ---
 
 ## 🧭 Future Directions
-
-- 🎙️ Transcribe audio to text using platform-agnostic `transcriber.py` modules  
+- 🔧 Refactor CLI into modular subcommands with `cli/` folder, improving maintainability and contributor onboarding
 - 🤖 Summarize transcripts with LLMs to generate structured highlights, tags, and semantic metadata  
-- 📝 Format enriched outputs for publishing: blog drafts, tweet threads, chapters, and SEO tags across platforms like Twitter, Bluesky, Instagram, and Facebook  
+- 📝 Format enriched outputs for publishing: blog drafts, tweet threads, chapters, and SEO tags across major social media platforms
 - 📦 Archive and index all enriched content into a searchable store  
 - 🧠 Integrate MCP server for agent orchestration, routing, retries, and tagging  
 - 🖥️ Build a GUI for reviewing and editing enriched metadata before publishing  

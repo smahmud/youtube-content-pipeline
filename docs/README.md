@@ -12,12 +12,13 @@ This project orchestrates audio extraction, transcription, metadata enrichment, 
 For system internals, see [docs/architecture.md](docs/architecture.md).  
 For folder layout, see [docs/project_structure.md](docs/project_structure.md).  
 For testing strategy and coverage, see [docs/test_strategy.md](docs/test_strategy.md).
+For schema definitions, see [transcript_schema.md](transcript_schema.md) and [metadata_schema.md](metadata_schema.md)
 
 ---
 
 ## 📦 Key Features
 
-- Modular extractors for YouTube, stream services, and local files
+- Modular extractors for YouTube and local files, with shared interface for future platforms
 - CLI orchestration with structured logging and error handling
 - Unified metadata schema with validation and test coverage
 - Semantic versioning and milestone-based release discipline
@@ -27,25 +28,23 @@ For testing strategy and coverage, see [docs/test_strategy.md](docs/test_strateg
 ## 📈 Milestone Status
 
 ### ✅ Completed
-Initial CLI-based YouTube audio extractor with MP3 conversion  
-Local video support for MP4 ingestion  
-Retry logic and logging hardening with yt-dlp integration  
-Post-merge cleanup and changelog recovery  
-Metadata extraction and schema enforcement  
-Architecture overhaul and multi-agent readiness
+- Initial CLI-based YouTube audio extractor with MP3 conversion
+- Local video support for MP4 ingestion
+- Retry logic and logging hardening with yt-dlp integration
+- Post-merge cleanup and changelog recovery
+- Metadata extraction and schema enforcement
+- Architecture overhaul and multi-agent readiness
+- Transcriber functionality with Whisper adapter, transcript normalization, and schema persistence
 
-### 🔨 In Progress
-- Finalizing `breaking/architecture-overhaul`
-- Scaffolding documentation suite
-- Preparing release `v0.4.0`
+---
 
 ### 🧭 Upcoming
 
-- 🎙️ Transcribe audio to text using platform-agnostic modules  
+- 🔧 Refactor CLI into modular subcommands with `cli/` folder, improving maintainability and contributor onboarding
 - 🤖 Summarize transcripts with LLMs to generate highlights, tags, and metadata  
 - 📝 Format outputs for publishing (blogs, threads, chapters, SEO)  
 - 📦 Archive and index enriched content in a searchable store  
-- 🧠 Integrate MCP server for agent routing, retries, and tagging  
+- 🧠 Integrate MCP server into extraction and transcription workflows
 - 🖥️ Build a GUI for reviewing and editing metadata  
 - 📊 Add real-time observability: logging, tracing, and metrics
 
