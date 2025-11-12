@@ -1,7 +1,10 @@
 """
-Core audio extraction logic for YouTube videos.
+File: extractor.py
 
-Downloads the audio stream from a given YouTube URL and converts it to MP3 format.
+Audio and metadata extraction logic for YouTube sources in the content-pipeline project.
+
+Implements a YouTubeExtractor that uses yt_dlp to download audio and retrieve structured metadata.
+Supports retry logic and schema normalization for downstream enrichment and transcription workflows.
 """
 import logging
 from pathlib import Path
@@ -9,10 +12,15 @@ from yt_dlp import YoutubeDL
 from yt_dlp.utils import DownloadError
 from pipeline.utils.retry import retry
 from pipeline.extractors.base import BaseExtractor
-from pipeline.schema.metadata import build_base_metadata
+from pipeline.extractors.schema.metadata import build_base_metadata
 
 class YouTubeExtractor(BaseExtractor):
+    """
+    Extractor for YouTube sources using yt_dlp.
 
+    Provides methods to download audio and extract metadata from YouTube URLs.
+    Used by CLI and orchestration layers to support streaming workflows.
+    """
     @retry(max_attempts=3)
     def extract_audio(self, source: str, output_path: str) -> str:
         """
@@ -76,7 +84,7 @@ class YouTubeExtractor(BaseExtractor):
                     title=info.get("title"),
                     duration=info.get("duration"),
                     author=info.get("uploader"),
-                    source_type="youtube_url",
+                    source_type="streaming",
                     source_path=None,
                     source_url=source,
                     metadata_status="complete",

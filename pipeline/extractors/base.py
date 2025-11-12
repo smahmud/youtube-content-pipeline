@@ -1,5 +1,5 @@
 """
-base.py
+File: base.py
 
 Defines the extractor interface for audio and metadata operations in the content-pipeline project.
 """
