@@ -1,5 +1,5 @@
 # Test artifacts
-tests/outputs/
+tests/output/
 tests/assets/
 
 # Virtual environments
@@ -25,4 +25,5 @@ output/
 
 #VS Code Workspace
 *.code-workspace
+.vscode/
 
