@@ -1,5 +1,5 @@
 """
-File: cli.py
+File: main_cli.py
 
 Command-line interface for running the transcription pipeline.
 Handles audio extraction, adapter selection, transcription, and output persistence.

@@ -19,7 +19,7 @@ import shutil
 from pathlib import Path
 import pytest
 
-CLI_PATH = os.path.abspath("cli.py")
+CLI_PATH = os.path.abspath("main_cli.py")
 
 TEST_OUTPUT_DIR = "tests/output"
 

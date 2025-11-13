@@ -81,7 +81,7 @@ Handles transcript serialization and file output:
 
 ### 2. CLI Orchestration
 
-`cli.py` — CLI entry point located at the project root
+`main_cli.py` — CLI entry point located at the project root
 
 Invokes pipeline stages via command-line. Uses Click-based named options with contributor-friendly help text and schema-enforced output.
 

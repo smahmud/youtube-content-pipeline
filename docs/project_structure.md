@@ -20,7 +20,7 @@ pipeline/
 │   ├── schemas/             # Transcript normalization models (e.g. transcript_v1)
 ├── config/                  # Logging and runtime setup
 ├── utils/                   # Reusable helpers (e.g., retry logic)
-├── cli.py                   # CLI entry point for orchestrating extractors
+├── main_cli.py                   # CLI entry point for orchestrating extractors
 ```
 
 ---
@@ -51,7 +51,7 @@ This section describes the purpose of each file located at the root of the repos
 | `requirements-dev.txt`   | Development and testing dependencies                                    |
 | `requirements.lock.test` | Locked test environment for reproducibility                             |
 | `setup.py`               | Packaging and distribution metadata                                     |
-| `cli.py`                 | CLI entry point for orchestrating extractors and transcription workflows |
+| `main_cli.py`            | CLI entry point for orchestrating extractors and transcription workflows |
 ```
 
 ---
